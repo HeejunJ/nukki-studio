@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nukki Studio</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Nukki">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one-screen tool — header + two tabs (Snip / Collage); sheets slide over for editing. */
+:root{
+  --paper:#FFFFFF; --ink:#1D1A1C; --muted:#766C72; --line:#ECE5E9; --well:#F7F3F5;
+  --accent:#D93C74; --accent-ink:#FFFFFF; --ok:#2E7D5B; --warn:#B8621B;
+  --chk-a:#FFFFFF; --chk-b:#F1E9ED;
+  --display:"Hahmlet","Apple SD Gothic Neo",Georgia,serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#151214; --ink:#F4EEF1; --muted:#A99DA4; --line:#2D272B; --well:#1E1A1D;
+  --accent:#FF6F9D; --accent-ink:#1D1A1C; --ok:#62C79A; --warn:#E59A55;
+  --chk-a:#262024; --chk-b:#1C171A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#151214; --ink:#F4EEF1; --muted:#A99DA4; --line:#2D272B; --well:#1E1A1D;
+  --accent:#FF6F9D; --accent-ink:#1D1A1C; --ok:#62C79A; --warn:#E59A55;
+  --chk-a:#262024; --chk-b:#1C171A; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:880px;margin:0 auto;padding-inline:16px;padding-block:18px 40px}
+.checker{background-color:var(--chk-a);background-image:linear-gradient(45deg,var(--chk-b) 25%,transparent 25%,transparent 75%,var(--chk-b) 75%),linear-gradient(45deg,var(--chk-b) 25%,transparent 25%,transparent 75%,var(--chk-b) 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1.5px solid var(--ink)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,7vw,44px);line-height:1;margin:0;letter-spacing:-.5px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;margin:6px 0 0}
+.tabs{display:flex;border:1.5px solid var(--ink)}
+.tabs button{appearance:none;border:0;background:transparent;color:var(--ink);font:700 13px/1 var(--body);padding:11px 16px;letter-spacing:.3px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.tabs .n{font-family:var(--mono);font-weight:500;font-size:11px;margin-left:6px;opacity:.75}
+button:focus-visible,label:focus-within,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);font:700 12.5px/1 var(--body);padding:11px 14px;cursor:pointer;letter-spacing:.2px;min-height:42px}
+.btn.solid{background:var(--ink);color:var(--paper)}
+.btn.hot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.quiet{border-color:var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn svg{width:16px;height:16px;flex:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.label{font:700 11px/1 var(--body);letter-spacing:1.4px;text-transform:uppercase;color:var(--accent)}
+section.pane{padding-top:20px}
+.pick{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:18px;border:1.5px dashed var(--line);background:var(--well)}
+.pick p{margin:0;color:var(--muted);font-size:13px;max-width:60ch}
+.pick.drag{border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
+.card{border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+.card .img{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.card .img img{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);object-fit:contain;-webkit-touch-callout:default}
+.card .meta{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.card .meta b{color:var(--ink);font-weight:500;font-family:var(--mono);font-size:11px}
+.dot{width:7px;height:7px;display:inline-block;margin-right:5px;vertical-align:1px}
+.card .acts{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.card .acts button{appearance:none;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font:700 11px/1 var(--body);padding:10px 2px;cursor:pointer;min-height:40px}
+.card .acts button:last-child{border-right:0}
+.card .acts button:disabled{opacity:.35}
+.x{position:absolute;top:6px;right:6px;width:28px;height:28px;border:1px solid var(--line);background:var(--paper);color:var(--ink);display:grid;place-items:center;cursor:pointer;font-size:15px;line-height:1}
+.spin{width:22px;height:22px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.bulk{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.hint{font-size:12.5px;color:var(--muted);margin:10px 0 0;max-width:62ch}
+/* collage */
+.cl{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:start}
+@media (max-width:760px){.cl{grid-template-columns:minmax(0,1fr)}}
+.stagebox{display:flex;justify-content:center;background:var(--well);border:1px solid var(--line);padding:12px}
+.stage{position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;width:100%;max-height:68vh;background:#fff}
+.stage>.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.st{position:absolute;left:0;top:0;transform-origin:center center;cursor:grab;touch-action:none}
+.st img{display:block;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none}
+.st.sel{outline:1.5px dashed var(--accent);outline-offset:3px}
+.st .h{position:absolute;right:-16px;bottom:-16px;width:30px;height:30px;border-radius:50%;background:var(--accent);border:2px solid #fff;display:none;cursor:nwse-resize;touch-action:none}
+.st.sel .h{display:block}
+.st .tag{position:absolute;left:0;top:-20px;font:700 10px/1 var(--body);letter-spacing:1px;color:var(--accent);background:var(--paper);padding:3px 5px;white-space:nowrap}
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border:1.5px solid var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--paper)}
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (max-width:760px){.tray{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}}
+.tray button{aspect-ratio:1/1;border:1px solid var(--line);padding:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
+.tray img{max-width:100%;max-height:100%;object-fit:contain}
+.tray .ex{position:absolute;left:2px;top:2px;font:700 9px/1 var(--body);color:var(--accent)}
+.seltools{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seltools .btn{padding:9px 4px;font-size:11.5px;min-height:38px}
+.empty{font-size:12.5px;color:var(--muted);margin:0}
+/* sheet editor */
+.sheet{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet .bar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);gap:8px}
+.sheet .canvasbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px}
+.sheet canvas{max-width:100%;max-height:100%;touch-action:none;cursor:crosshair}
+.sheet .ctl{padding:12px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px;max-width:640px;width:100%;margin:0 auto}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--ink)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--ink);font:700 12.5px/1 var(--body);padding:12px;cursor:pointer}
+.seg button[aria-checked="true"]{background:var(--ink);color:var(--paper)}
+.rng{display:flex;align-items:center;gap:12px}
+.rng span{font:700 11px/1 var(--body);letter-spacing:1px;min-width:62px}
+.rng input{flex:1;accent-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 16px;font-size:13px;max-width:calc(100% - 32px);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2s}.toast{transition:none}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Nukki <em>Studio</em></h1>
+      <p class="sub">여러 장을 한 번에 누끼 따고, 복사하고, 바로 콜라주로.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="모드">
+      <button id="tab-snip" role="tab" aria-selected="true" aria-controls="pane-snip">누끼 따기<span class="n" id="count">0</span></button>
+      <button id="tab-col" role="tab" aria-selected="false" aria-controls="pane-col">콜라주</button>
+    </div>
+  </header>
+
+  <!-- SNIP -->
+  <section class="pane" id="pane-snip" role="tabpanel" aria-labelledby="tab-snip">
+    <label class="pick" id="drop">
+      <span class="label">01 · 사진 불러오기</span>
+      <span class="btn hot" role="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-8 7"/></svg>사진 여러 장 고르기</span>
+      <input id="files" type="file" accept="image/*" multiple hidden>
+      <p>사진 앱에서 여러 장 골라도 돼요. 배경이 단색일수록(침대 시트, 벽, 바닥) 깔끔하게 따져요. 남은 부분은 <b>손보기</b>에서 지우개/복구 브러쉬로 다듬으세요. 사진은 이 기기 안에서만 처리돼요.</p>
+    </label>
+
+    <div class="bulk" id="bulk" hidden>
+      <span class="label" id="bulkLabel">02 · 누끼 결과</span>
+      <div class="row">
+        <button class="btn quiet" id="saveAll" type="button">전부 저장</button>
+        <button class="btn solid" id="toCollage" type="button">전부 콜라주에 넣기 →</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="hint" id="copyHint"><b>저장</b>을 누르면 공유 창이 떠요. <b>이미지 저장</b>을 고르면 사진 앱에 들어가요. 결과 이미지를 길게 눌러 복사해도 돼요.</p>
+  </section>
+
+  <!-- COLLAGE -->
+  <section class="pane" id="pane-col" role="tabpanel" aria-labelledby="tab-col" hidden>
+    <div class="cl">
+      <div>
+        <div class="stagebox"><div class="stage" id="stage"></div></div>
+        <p class="hint">스티커를 끌어서 옮기고, 분홍 점을 돌려서 크기·각도를 바꿔요. 두 손가락으로 집어도 돼요. 복사한 이미지는 여기서 붙여넣기(⌘V)로도 들어와요.</p>
+      </div>
+      <div class="side">
+        <div>
+          <div class="label" style="margin-bottom:8px">배경</div>
+          <div class="row">
+            <label class="btn" for="bgfile">배경 사진 고르기</label>
+            <input id="bgfile" type="file" accept="image/*" hidden>
+          </div>
+          <div class="swatches" style="margin-top:8px" id="swatches"></div>
+        </div>
+        <div>
+          <div class="label" style="margin-bottom:8px">누끼 넣기</div>
+          <div class="tray" id="tray"></div>
+          <p class="empty" id="trayEmpty" hidden>누끼 따기 탭에서 사진을 불러오면 여기에 떠요.</p>
+        </div>
+        <div id="selBox">
+          <div class="label" style="margin-bottom:8px">선택한 스티커</div>
+          <div class="seltools">
+            <button class="btn" id="fwd" type="button">앞으로</button>
+            <button class="btn" id="back" type="button">뒤로</button>
+            <button class="btn" id="flip" type="button">좌우반전</button>
+            <button class="btn" id="dup" type="button">복제</button>
+            <button class="btn" id="del" type="button">삭제</button>
+            <button class="btn" id="desel" type="button">선택 해제</button>
+          </div>
+        </div>
+        <div>
+          <div class="label" style="margin-bottom:8px">완성</div>
+          <div class="row">
+            <button class="btn solid" id="exCopy" type="button">콜라주 복사</button>
+            <button class="btn hot" id="exSave" type="button">사진으로 저장</button>
+          </div>
+          <img id="exPreview" alt="완성된 콜라주 — 길게 눌러 복사/저장" style="margin-top:10px;border:1px solid var(--line)" hidden>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Editor -->
+<div class="sheet" id="editor" hidden>
+  <div class="bar">
+    <button class="btn quiet" id="edCancel" type="button">취소</button>
+    <span class="label">손보기</span>
+    <button class="btn quiet" id="edUndo" type="button">되돌리기</button>
+  </div>
+  <div class="canvasbox checker"><canvas id="edCanvas"></canvas></div>
+  <div class="ctl">
+    <div class="seg" role="radiogroup" aria-label="브러쉬">
+      <button type="button" role="radio" aria-checked="true" id="mErase">지우개</button>
+      <button type="button" role="radio" aria-checked="false" id="mRecover">복구</button>
+    </div>
+    <div class="rng"><span>브러쉬</span><input id="brush" type="range" min="6" max="90" value="30"></div>
+    <div class="rng"><span>자동 강도</span><input id="strength" type="range" min="0" max="100" step="5" value="50"></div>
+    <button class="btn solid" id="edDone" type="button" style="width:100%">완료</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+/* ───────── on-device background removal (border-colour learning + flood fill) ───────── */
+function s2l(c){c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4)}
+function lab(r,g,b){const R=s2l(r),G=s2l(g),B=s2l(b);let x=(R*.4124+G*.3576+B*.1805)/.95047,y=R*.2126+G*.7152+B*.0722,z=(R*.0193+G*.1192+B*.9505)/1.08883;const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;x=f(x);y=f(y);z=f(z);return[116*y-16,500*(x-y),200*(y-z)]}
+function dist(a,b){const dL=(a[0]-b[0])*.55,da=a[1]-b[1],db=a[2]-b[2];return Math.sqrt(dL*dL+da*da+db*db)}
+function kmeans(pts,k,it=10){if(!pts.length)return[];const c=[];for(let i=0;i<k;i++)c.push(pts[Math.floor((i+.5)*pts.length/k)].slice());let n=new Array(k).fill(0);for(let t=0;t<it;t++){const s=c.map(()=>[0,0,0]);n=new Array(k).fill(0);for(const p of pts){let b=0,bd=1e9;for(let j=0;j<k;j++){const d=dist(p,c[j]);if(d<bd){bd=d;b=j}}s[b][0]+=p[0];s[b][1]+=p[1];s[b][2]+=p[2];n[b]++}for(let j=0;j<k;j++)if(n[j])c[j]=[s[j][0]/n[j],s[j][1]/n[j],s[j][2]/n[j]]}return c.map((cc,i)=>({c:cc,n:n[i]}))}
+const mk=(w,h)=>{const c=document.createElement("canvas");c.width=w;c.height=h;return c};
+const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});
+const toBlob=c=>new Promise(r=>c.toBlob(r,"image/png"));
+
+async function removeBackground(img,tolerance){
+  const W0=img.naturalWidth,H0=img.naturalHeight;
+  const PS=Math.min(1,520/Math.max(W0,H0));
+  const w=Math.max(32,Math.round(W0*PS)),h=Math.max(32,Math.round(H0*PS));
+  const pc=mk(w,h),pctx=pc.getContext("2d",{willReadFrequently:true});pctx.drawImage(img,0,0,w,h);
+  const px=pctx.getImageData(0,0,w,h).data,N=w*h,L=new Array(N);
+  for(let i=0;i<N;i++)L[i]=lab(px[i*4],px[i*4+1],px[i*4+2]);
+  const band=Math.max(2,Math.round(Math.min(w,h)*.02)),border=[];
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<band||y<band||x>=w-band||y>=h-band)border.push(y*w+x);
+  const bgC=kmeans(border.map(i=>L[i]),4).filter(c=>c.n>border.length*.06).map(c=>c.c);
+  const dBg=new Float32Array(N);for(let i=0;i<N;i++){let bd=1e9;for(const c of bgC){const d=dist(L[i],c);if(d<bd)bd=d}dBg[i]=bd}
+  const spread=border.map(i=>dBg[i]).sort((a,b)=>a-b),noise=spread[Math.floor(spread.length*.9)]||6,baseT=Math.max(5,Math.min(30,noise*1.25));
+  const q=new Int32Array(N);
+  const segment=T=>{const bg=new Uint8Array(N);let qh=0,qt=0;for(const i of border)if(dBg[i]<T){bg[i]=1;q[qt++]=i}
+    while(qh<qt){const i=q[qh++],x=i%w,y=(i/w)|0;for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1]){if(j<0||bg[j])continue;if(dBg[j]<T||(dist(L[j],L[i])<T*.3&&dBg[j]<T*1.6)){bg[j]=1;q[qt++]=j}}}
+    const fg=new Uint8Array(N);for(let i=0;i<N;i++)fg[i]=bg[i]?0:1;
+    const er=new Uint8Array(N);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;er[i]=fg[i]&fg[i-1]&fg[i+1]&fg[i-w]&fg[i+w]}
+    const op=new Uint8Array(N);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;op[i]=er[i]|er[i-1]|er[i+1]|er[i-w]|er[i+w]}
+    const lb=new Int32Array(N),sz=[0];let cur=0;
+    for(let s=0;s<N;s++){if(!op[s]||lb[s])continue;cur++;let n=0;qh=0;qt=0;q[qt++]=s;lb[s]=cur;while(qh<qt){const i=q[qh++];n++;const x=i%w,y=(i/w)|0;for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1])if(j>=0&&op[j]&&!lb[j]){lb[j]=cur;q[qt++]=j}}sz.push(n)}
+    let mx=0;for(const v of sz)if(v>mx)mx=v;const keep=sz.map((v,k)=>k>0&&v>=mx*.12?1:0);
+    const mask=new Float32Array(N);let area=0,minX=w,minY=h,maxX=0,maxY=0;
+    for(let i=0;i<N;i++)if(lb[i]&&keep[lb[i]]){mask[i]=1;area++;const x=i%w,y=(i/w)|0;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}
+    return{mask,minX,minY,maxX,maxY,ratio:area/N}};
+  const valid=r=>r.ratio>.04&&r.ratio<.95;
+  let seg=segment(baseT*(.6+tolerance/100*1.6));
+  if(!valid(seg))for(const m of [1,.75,1.8,.5,2.6]){const s2=segment(baseT*m);if(valid(s2)){seg=s2;break}}
+  const OUT=1400;
+  if(!valid(seg)){const s=Math.min(1,OUT/Math.max(W0,H0)),oc=mk(Math.round(W0*s),Math.round(H0*s));oc.getContext("2d").drawImage(img,0,0,oc.width,oc.height);return{ok:false,cut:oc,orig:oc}}
+  const {mask,minX,minY,maxX,maxY}=seg;
+  for(let p=0;p<2;p++){const s=mask.slice();for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;mask[i]=(s[i]*4+s[i-1]+s[i+1]+s[i-w]+s[i+w])/8}}
+  const mc=mk(w,h),mx=mc.getContext("2d"),mi=mx.createImageData(w,h);
+  for(let i=0;i<N;i++){mi.data[i*4]=mi.data[i*4+1]=mi.data[i*4+2]=255;mi.data[i*4+3]=Math.max(0,Math.min(255,Math.round((mask[i]-.15)/.7*255)))}
+  mx.putImageData(mi,0,0);
+  const pad=Math.round(Math.max(maxX-minX,maxY-minY)*.05),cx0=Math.max(0,minX-pad),cy0=Math.max(0,minY-pad),cx1=Math.min(w,maxX+pad+1),cy1=Math.min(h,maxY+pad+1),cw=cx1-cx0,ch=cy1-cy0,k=W0/w;
+  const os=Math.min(OUT/(cw*k),OUT/(ch*k),1),ow=Math.max(1,Math.round(cw*k*os)),oh=Math.max(1,Math.round(ch*k*os));
+  const orig=mk(ow,oh),octx=orig.getContext("2d");octx.imageSmoothingQuality="high";octx.drawImage(img,cx0*k,cy0*k,cw*k,ch*k,0,0,ow,oh);
+  const cut=mk(ow,oh),c2=cut.getContext("2d");c2.drawImage(orig,0,0);c2.globalCompositeOperation="destination-in";c2.imageSmoothingQuality="high";c2.drawImage(mc,cx0,cy0,cw,ch,0,0,ow,oh);
+  return{ok:true,cut,orig};
+}
+function trim(c,o){const ctx=c.getContext("2d"),{width:w,height:h}=c,d=ctx.getImageData(0,0,w,h).data;let a=w,b=h,e=-1,f=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>8){if(x<a)a=x;if(x>e)e=x;if(y<b)b=y;if(y>f)f=y}
+  if(e<0)return{cut:c,orig:o};a=Math.max(0,a-4);b=Math.max(0,b-4);e=Math.min(w-1,e+4);f=Math.min(h-1,f+4);
+  const cw=e-a+1,ch=f-b+1,n=mk(cw,ch),no=mk(cw,ch);n.getContext("2d").drawImage(c,a,b,cw,ch,0,0,cw,ch);no.getContext("2d").drawImage(o,a,b,cw,ch,0,0,cw,ch);return{cut:n,orig:no}}
+
+/* ───────── shared UI helpers ───────── */
+const $=id=>document.getElementById(id);
+const toastEl=$("toast");let tt;
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove("on"),2600)}
+async function copyBlob(blob){
+  try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);toast("복사했어요. 원하는 곳에 붙여넣기 하세요.");return true}
+  catch{toast("이미지 복사가 안 되는 브라우저예요. 이미지를 길게 눌러 복사하세요.");return false}
+}
+/* Save: iPhone share sheet ("이미지 저장" → 사진 앱), or a normal download on desktop */
+async function saveFiles(list){
+  const files=list.map(x=>new File([x.blob],x.name,{type:"image/png"}));
+  if(navigator.canShare&&navigator.canShare({files})){
+    try{await navigator.share({files});return true}catch(e){if(e&&e.name==="AbortError")return false}
+  }
+  for(const f of files){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+  return true;
+}
+const saveBlob=(blob,name)=>saveFiles([{blob,name}]);
+const stamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`};
+
+/* ───────── state ───────── */
+const items=[]; // {id,file,img,status,cut,orig,blob,url,tol,ok}
+let uid=0;
+
+/* ───────── tabs ───────── */
+function showTab(t){const snip=t==="snip";$("tab-snip").setAttribute("aria-selected",snip);$("tab-col").setAttribute("aria-selected",!snip);$("pane-snip").hidden=!snip;$("pane-col").hidden=snip;if(!snip){fitStage();renderTray()}}
+$("tab-snip").onclick=()=>showTab("snip");$("tab-col").onclick=()=>showTab("col");
+
+/* ───────── snip pane ───────── */
+const drop=$("drop");
+$("files").addEventListener("change",e=>{addFiles([...e.target.files]);e.target.value=""});
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("drag")}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("drag")}));
+drop.addEventListener("drop",e=>addFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith("image/"))));
+
+let busy=false;
+function addFiles(files){for(const f of files)items.push({id:++uid,file:f,status:"wait",tol:50});renderGrid();pump()}
+async function pump(){if(busy)return;const it=items.find(i=>i.status==="wait");if(!it)return;busy=true;it.status="work";renderGrid();
+  try{const src=URL.createObjectURL(it.file);it.img=await loadImg(src);await new Promise(r=>setTimeout(r,20));await runCut(it)}catch(e){it.status="err"}
+  busy=false;renderGrid();pump()}
+async function runCut(it){const r=removeBackground(it.img,it.tol);const res=await r;const t=res.ok?trim(res.cut,res.orig):res;await setResult(it,t.cut,t.orig,res.ok)}
+async function setResult(it,cut,orig,ok){it.cut=cut;it.orig=orig;it.ok=ok;it.blob=await toBlob(cut);if(it.url)URL.revokeObjectURL(it.url);it.url=URL.createObjectURL(it.blob);it.status="done"}
+
+function renderGrid(){
+  const g=$("grid");g.textContent="";
+  const done=items.filter(i=>i.status==="done");
+  $("count").textContent=done.length;$("bulk").hidden=items.length===0;
+  $("bulkLabel").textContent=`02 · 누끼 결과 ${done.length}/${items.length}`;
+  for(const it of items){
+    const c=document.createElement("div");c.className="card";
+    const box=document.createElement("div");box.className="img checker";
+    if(it.status==="done"){const im=document.createElement("img");im.src=it.url;im.alt="누끼 결과 — 길게 눌러 복사";box.append(im)}
+    else if(it.status==="err"){box.textContent="읽을 수 없는 사진";box.style.fontSize="12px"}
+    else{const s=document.createElement("div");s.className="spin";box.append(s)}
+    const x=document.createElement("button");x.className="x";x.type="button";x.setAttribute("aria-label","삭제");x.textContent="×";
+    x.onclick=()=>{items.splice(items.indexOf(it),1);renderGrid()};box.append(x);
+    const meta=document.createElement("div");meta.className="meta";
+    const st=it.status==="done"?(it.ok?["var(--ok)","누끼 완료"]:["var(--warn)","배경이 복잡해요 — 손보기"]):it.status==="err"?["var(--warn)","오류"]:["var(--muted)",it.status==="work"?"따는 중…":"대기 중"];
+    meta.innerHTML=`<span><i class="dot" style="background:${st[0]}"></i>${st[1]}</span>`;
+    if(it.cut){const b=document.createElement("b");b.textContent=`${it.cut.width}×${it.cut.height}`;meta.append(b)}
+    const acts=document.createElement("div");acts.className="acts";
+    const mkb=(t,fn)=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.disabled=it.status!=="done";b.onclick=fn;acts.append(b)};
+    mkb("복사",()=>copyBlob(it.blob));
+    mkb("저장",()=>saveBlob(it.blob,`nukki-${stamp()}-${it.id}.png`));
+    mkb("손보기",()=>openEditor(it));
+    mkb("콜라주",()=>{addSticker(it.url,it.cut.width,it.cut.height);showTab("col");toast("콜라주에 넣었어요")});
+    c.append(box,meta,acts);g.append(c);
+  }
+}
+$("saveAll").onclick=()=>{const d=items.filter(i=>i.status==="done");if(!d.length)return;saveFiles(d.map(it=>({blob:it.blob,name:`nukki-${stamp()}-${it.id}.png`})))};
+$("toCollage").onclick=()=>{const d=items.filter(i=>i.status==="done");if(!d.length){toast("먼저 사진을 불러오세요");return}
+  d.forEach((it,i)=>addSticker(it.url,it.cut.width,it.cut.height,.22+((i%3)*.28),.3+Math.floor(i/3)*.25));showTab("col")};
+
+/* ───────── editor (erase / recover) ───────── */
+const ed=$("editor"),edc=$("edCanvas");let edItem=null,edMode="erase",undo=[],drawing=false,last=null,origC=null;
+function openEditor(it){edItem=it;$("strength").value=it.tol;loadEditor(it.cut,it.orig);ed.hidden=false;setMode("erase")}
+function loadEditor(cut,orig){edc.width=cut.width;edc.height=cut.height;const x=edc.getContext("2d");x.clearRect(0,0,edc.width,edc.height);x.drawImage(cut,0,0);origC=orig;undo=[]}
+function setMode(m){edMode=m;$("mErase").setAttribute("aria-checked",m==="erase");$("mRecover").setAttribute("aria-checked",m==="recover")}
+$("mErase").onclick=()=>setMode("erase");$("mRecover").onclick=()=>setMode("recover");
+const pt=e=>{const r=edc.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*edc.width,y:(e.clientY-r.top)/r.height*edc.height,s:edc.width/r.width}};
+function paint(a,b,s){const x=edc.getContext("2d"),rad=$("brush").value*s/2;
+  if(edMode==="erase"){x.save();x.globalCompositeOperation="destination-out";x.lineCap="round";x.lineWidth=rad*2;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x+.01,b.y+.01);x.stroke();x.restore();return}
+  const d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(d/Math.max(1,rad/3)));x.save();x.beginPath();
+  for(let i=0;i<=n;i++){const px=a.x+(b.x-a.x)*i/n,py=a.y+(b.y-a.y)*i/n;x.moveTo(px+rad,py);x.arc(px,py,rad,0,Math.PI*2)}
+  x.clip();x.clearRect(0,0,edc.width,edc.height);x.drawImage(origC,0,0,edc.width,edc.height);x.restore()}
+edc.addEventListener("pointerdown",e=>{edc.setPointerCapture(e.pointerId);undo.push(edc.getContext("2d").getImageData(0,0,edc.width,edc.height));if(undo.length>25)undo.shift();drawing=true;last=pt(e);paint(last,last,last.s)});
+edc.addEventListener("pointermove",e=>{if(!drawing)return;const p=pt(e);paint(last,p,p.s);last=p});
+["pointerup","pointercancel"].forEach(t=>edc.addEventListener(t,()=>{drawing=false;last=null}));
+$("edUndo").onclick=()=>{const s=undo.pop();if(s)edc.getContext("2d").putImageData(s,0,0)};
+$("edCancel").onclick=()=>{ed.hidden=true;edItem=null};
+let stTimer;$("strength").addEventListener("input",e=>{clearTimeout(stTimer);stTimer=setTimeout(async()=>{if(!edItem)return;edItem.tol=+e.target.value;const r=await removeBackground(edItem.img,edItem.tol);const t=r.ok?trim(r.cut,r.orig):r;edItem.ok=r.ok;loadEditor(t.cut,t.orig)},250)});
+$("edDone").onclick=async()=>{const it=edItem;if(!it)return;const t=trim(edc,(()=>{const o=mk(edc.width,edc.height);o.getContext("2d").drawImage(origC,0,0,edc.width,edc.height);return o})());
+  const cut=mk(t.cut.width,t.cut.height);cut.getContext("2d").drawImage(t.cut,0,0);await setResult(it,cut,t.orig,true);ed.hidden=true;edItem=null;renderGrid();toast("다듬었어요")};
+
+/* ───────── collage ───────── */
+const stage=$("stage");let bg={kind:"color",color:"#FBE7EE",w:1080,h:1350},stickers=[],sel=null;
+const BG_COLORS=["#FFFFFF","#FBE7EE","#F2E0B8","#A7D4E9","#1D1A1C"];
+function renderSwatches(){const s=$("swatches");s.textContent="";for(const c of BG_COLORS){const b=document.createElement("button");b.className="sw";b.type="button";b.style.background=c;b.setAttribute("aria-label","배경색 "+c);b.setAttribute("aria-pressed",bg.kind==="color"&&bg.color===c);b.onclick=()=>{bg={kind:"color",color:c,w:1080,h:1350};drawBg();renderSwatches()};s.append(b)}}
+$("bgfile").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const url=URL.createObjectURL(f);const im=await loadImg(url);bg={kind:"img",url,img:im,w:im.naturalWidth,h:im.naturalHeight};drawBg();renderSwatches()});
+function drawBg(){stage.querySelector(".bg")?.remove();stage.style.background=bg.kind==="color"?bg.color:"#fff";
+  if(bg.kind==="img"){const im=document.createElement("img");im.className="bg";im.src=bg.url;im.alt="";stage.prepend(im)}fitStage()}
+function fitStage(){if($("pane-col").hidden)return;const box=stage.parentElement,maxW=box.clientWidth-24,maxH=Math.max(260,window.innerHeight*.68);let w=maxW,h=w*bg.h/bg.w;if(h>maxH){h=maxH;w=h*bg.w/bg.h}stage.style.width=w+"px";stage.style.height=h+"px";stickers.forEach(place)}
+window.addEventListener("resize",()=>{if(!$("pane-col").hidden)fitStage()});
+
+function addSticker(url,w,h,x=.5,y=.5,sample=false){const s={id:++uid,url,w,h,x,y,s:.4*Math.min(1,(w/h)*(bg.h/bg.w)),r:0,flip:false,sample};
+  const el=document.createElement("div");el.className="st";el.innerHTML=`<img alt="" src="${url}">${sample?'<span class="tag">예시</span>':""}<span class="h" aria-hidden="true"></span>`;s.el=el;stage.append(el);stickers.push(s);bind(s);place(s);select(s);return s}
+function place(s){const W=stage.clientWidth,H=stage.clientHeight,ww=s.s*W,hh=ww*s.h/s.w;s.el.style.width=ww+"px";s.el.style.height=hh+"px";s.el.style.transform=`translate(${s.x*W-ww/2}px,${s.y*H-hh/2}px) rotate(${s.r}deg) scaleX(${s.flip?-1:1})`;s.el.querySelector(".tag")&&(s.el.querySelector(".tag").style.transform=`scaleX(${s.flip?-1:1})`)}
+function select(s){sel=s;stickers.forEach(t=>t.el.classList.toggle("sel",t===s));$("selBox").style.opacity=s?1:.45}
+function bind(s){const el=s.el,h=el.querySelector(".h");
+  el.addEventListener("pointerdown",e=>{if(e.target===h)return;e.stopPropagation();select(s);el.setPointerCapture(e.pointerId);const r=stage.getBoundingClientRect(),sx=e.clientX,sy=e.clientY,ox=s.x,oy=s.y;
+    const mv=ev=>{if(pinch)return;s.x=ox+(ev.clientX-sx)/r.width;s.y=oy+(ev.clientY-sy)/r.height;place(s)};const up=()=>{el.removeEventListener("pointermove",mv);el.removeEventListener("pointerup",up);el.removeEventListener("pointercancel",up)};
+    el.addEventListener("pointermove",mv);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up)});
+  h.addEventListener("pointerdown",e=>{e.stopPropagation();h.setPointerCapture(e.pointerId);const r=stage.getBoundingClientRect(),cx=r.left+s.x*r.width,cy=r.top+s.y*r.height,d0=Math.hypot(e.clientX-cx,e.clientY-cy),a0=Math.atan2(e.clientY-cy,e.clientX-cx),s0=s.s,r0=s.r;
+    const mv=ev=>{const d=Math.hypot(ev.clientX-cx,ev.clientY-cy),a=Math.atan2(ev.clientY-cy,ev.clientX-cx);s.s=Math.max(.04,Math.min(3,s0*d/d0));s.r=r0+(a-a0)*180/Math.PI;place(s)};
+    const up=()=>{h.removeEventListener("pointermove",mv);h.removeEventListener("pointerup",up);h.removeEventListener("pointercancel",up)};h.addEventListener("pointermove",mv);h.addEventListener("pointerup",up);h.addEventListener("pointercancel",up)})}
+/* two-finger pinch / rotate on the stage for the selected sticker */
+const touches=new Map();let pinch=null;
+stage.addEventListener("pointerdown",e=>{touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2&&sel){const [a,b]=[...touches.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),a:Math.atan2(b.y-a.y,b.x-a.x),s:sel.s,r:sel.r}}else if(touches.size===1&&e.target===stage)select(null)},true);
+stage.addEventListener("pointermove",e=>{if(!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&sel&&touches.size===2){const [a,b]=[...touches.values()];sel.s=Math.max(.04,Math.min(3,pinch.s*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d));sel.r=pinch.r+(Math.atan2(b.y-a.y,b.x-a.x)-pinch.a)*180/Math.PI;place(sel)}},true);
+["pointerup","pointercancel"].forEach(t=>stage.addEventListener(t,e=>{touches.delete(e.pointerId);if(touches.size<2)pinch=null},true));
+
+$("fwd").onclick=()=>{if(!sel)return;stage.append(sel.el);stickers.push(stickers.splice(stickers.indexOf(sel),1)[0])};
+$("back").onclick=()=>{if(!sel)return;const first=stage.querySelector(".st");stage.insertBefore(sel.el,first);stickers.unshift(stickers.splice(stickers.indexOf(sel),1)[0])};
+$("flip").onclick=()=>{if(!sel)return;sel.flip=!sel.flip;place(sel)};
+$("dup").onclick=()=>{if(!sel)return;const n=addSticker(sel.url,sel.w,sel.h,Math.min(.95,sel.x+.05),Math.min(.95,sel.y+.05),sel.sample);n.s=sel.s;n.r=sel.r;n.flip=sel.flip;place(n)};
+$("del").onclick=()=>{if(!sel)return;sel.el.remove();stickers.splice(stickers.indexOf(sel),1);select(null)};
+$("desel").onclick=()=>select(null);
+
+function renderTray(){const t=$("tray");t.textContent="";const d=items.filter(i=>i.status==="done");$("trayEmpty").hidden=d.length>0||samples.length>0;
+  for(const it of d){const b=document.createElement("button");b.type="button";b.className="checker";b.setAttribute("aria-label","콜라주에 넣기");b.innerHTML=`<img alt="" src="${it.url}">`;b.onclick=()=>addSticker(it.url,it.cut.width,it.cut.height);t.append(b)}
+  for(const s of samples){const b=document.createElement("button");b.type="button";b.className="checker";b.setAttribute("aria-label","예시 스티커 넣기");b.innerHTML=`<img alt="" src="${s.url}"><span class="ex">예시</span>`;b.onclick=()=>addSticker(s.url,s.w,s.h,.5,.5,true);t.append(b)}}
+
+/* paste images straight into the collage */
+document.addEventListener("paste",async e=>{const f=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith("image/"))?.getAsFile();if(!f)return;e.preventDefault();const url=URL.createObjectURL(f);const im=await loadImg(url);
+  if(!$("pane-col").hidden){addSticker(url,im.naturalWidth,im.naturalHeight)}else{addFiles([f])}});
+
+/* export */
+async function exportCanvas(){const W=bg.kind==="img"?Math.min(2400,bg.w):1080,H=Math.round(W*bg.h/bg.w),c=mk(W,H),x=c.getContext("2d");
+  if(bg.kind==="img")x.drawImage(bg.img,0,0,W,H);else{x.fillStyle=bg.color;x.fillRect(0,0,W,H)}
+  for(const s of stickers){const im=s.img||(s.img=await loadImg(s.url)),ww=s.s*W,hh=ww*s.h/s.w;x.save();x.translate(s.x*W,s.y*H);x.rotate(s.r*Math.PI/180);x.scale(s.flip?-1:1,1);x.imageSmoothingQuality="high";x.drawImage(im,-ww/2,-hh/2,ww,hh);x.restore()}
+  const blob=await toBlob(c);const p=$("exPreview");if(p.src)URL.revokeObjectURL(p.src);p.src=URL.createObjectURL(blob);p.hidden=false;return blob}
+$("exCopy").onclick=async()=>{const b=await exportCanvas();copyBlob(b)};
+$("exSave").onclick=async()=>{const b=await exportCanvas();saveBlob(b,`collage-${stamp()}.png`)};
+
+/* sample stickers so the collage opens in a working state */
+const samples=[];
+function sample(draw,w,h){const c=mk(w,h);draw(c.getContext("2d"),w,h);return new Promise(r=>c.toBlob(b=>{const s={url:URL.createObjectURL(b),w,h};samples.push(s);r(s)}))}
+(async()=>{
+  const heart=await sample((x,w,h)=>{x.fillStyle="#E0457B";x.beginPath();x.moveTo(w/2,h*.88);x.bezierCurveTo(w*.05,h*.55,w*.05,h*.12,w*.3,h*.12);x.bezierCurveTo(w*.42,h*.12,w/2,h*.22,w/2,h*.3);x.bezierCurveTo(w/2,h*.22,w*.58,h*.12,w*.7,h*.12);x.bezierCurveTo(w*.95,h*.12,w*.95,h*.55,w/2,h*.88);x.fill()},300,280);
+  const star=await sample((x,w,h)=>{x.fillStyle="#F2D24B";x.strokeStyle="#1D1A1C";x.lineWidth=8;x.beginPath();for(let i=0;i<10;i++){const r=i%2?w*.2:w*.46,a=-Math.PI/2+i*Math.PI/5;x.lineTo(w/2+r*Math.cos(a),h/2+r*Math.sin(a))}x.closePath();x.fill();x.stroke()},300,300);
+  renderSwatches();drawBg();
+  const a=addSticker(heart.url,heart.w,heart.h,.36,.42,true);a.r=-12;place(a);
+  const b=addSticker(star.url,star.w,star.h,.64,.6,true);b.r=10;place(b);select(null);renderTray();
+})();
+renderGrid();
+})();
+</script>
+
+<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+</body>
+</html>
